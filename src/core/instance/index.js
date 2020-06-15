@@ -18,6 +18,6 @@ initMixin(Vue) // 定义 Vue.prototype._init() 方法
 stateMixin(Vue) // 在 Vue.prototype 上定义 $data, $props, $set, $del, $watch
 eventsMixin(Vue) // 在 Vue.prototype 上定义 $on, $once, $off, $emit
 lifecycleMixin(Vue) // 在 Vue.prototype 上定义 _update, $forceUpdate, $destroy 方法
-renderMixin(Vue)
+renderMixin(Vue) // 在 Vue.prototype 上定义 $nextTick，_render，
 
 export default Vue
