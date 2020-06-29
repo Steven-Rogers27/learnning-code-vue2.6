@@ -92,7 +92,7 @@ function flushSchedulerQueue () {
     }
     id = watcher.id
     has[id] = null
-    watcher.run()
+    watcher.run() // 执行 watcher 的回调函数
     // in dev build, check and stop circular updates.
     if (process.env.NODE_ENV !== 'production' && has[id] != null) {
       circular[id] = (circular[id] || 0) + 1
@@ -174,7 +174,7 @@ export function queueWatcher (watcher: Watcher) {
       while (i > index && queue[i].id > watcher.id) {
         i--
       }
-      queue.splice(i + 1, 0, watcher)
+      queue.splice(i + 1, 0, watcher) // 把 watcher 按 id 由小到大的顺序插入 queue
     }
     // queue the flush
     if (!waiting) {

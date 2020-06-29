@@ -162,6 +162,9 @@ export function defineReactive (
     get: function reactiveGetter () {
       const value = getter ? getter.call(obj) : val
       if (Dep.target) {
+        // get 方法除了获取值以外，也是一个收集依赖的过程，
+        // 给每个 key 执行 defineReactive 时，都给它关联一个独有的 dep 实例，
+        // 然后把这个 dep 添加到 Dep.target 的依赖列表（deps）中，同时把 Dep.target 也添加到 dep 的订阅者（subs）列表中
         dep.depend()
         if (childOb) {
           childOb.dep.depend()

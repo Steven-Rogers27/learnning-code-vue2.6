@@ -13,7 +13,7 @@ const seenObjects = new Set()
  */
 export function traverse (val: any) {
   _traverse(val, seenObjects)
-  seenObjects.clear()
+  seenObjects.clear() // 不能理解！！为什么刚收集到 seenObjects 中，又要把 seenObjects 清空
 }
 
 function _traverse (val: any, seen: SimpleSet) {
@@ -27,6 +27,7 @@ function _traverse (val: any, seen: SimpleSet) {
     if (seen.has(depId)) {
       return
     }
+    // 把每个 val 值所关联的 observer 对象的 depId 收集起来
     seen.add(depId)
   }
   if (isA) {
