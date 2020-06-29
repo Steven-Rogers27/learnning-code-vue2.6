@@ -83,7 +83,7 @@ export function initExtend (Vue: GlobalAPI) {
 function initProps (Comp) {
   const props = Comp.options.props
   for (const key in props) {
-    proxy(Comp.prototype, `_props`, key)
+    proxy(Comp.prototype, `_props`, key) // Comp.prototype[key] 其实访问的是 Comp.prototype['_props'][key]
   }
 }
 

@@ -17,7 +17,7 @@ export default class Dep {
 
   constructor () {
     this.id = uid++
-    this.subs = []
+    this.subs = [] // 订阅者列表
   }
 
   addSub (sub: Watcher) {
@@ -28,12 +28,16 @@ export default class Dep {
     remove(this.subs, sub)
   }
 
+  // 把当前这个 dep (this所指) 添加到 Dep.target （指向当前正在被计算的 watcher） 的依赖列表（deps）中，
+  // 同时也把 Dep.target 添加到这个 dep 的订阅者（subs）数组中
+  // 也就是说，watcher 的依赖列表中有 dep，反过来 dep 的 subs 列表中也有这个 watcher
   depend () {
     if (Dep.target) {
       Dep.target.addDep(this)
     }
   }
-
+  // dep 所关联的值发生变化时，通过 notify() 来调用所有订阅者的 update() 方法，
+  // update 方法中会执行订阅者的回调函数。
   notify () {
     // stabilize the subscriber list first
     const subs = this.subs.slice()
@@ -52,6 +56,8 @@ export default class Dep {
 // The current target watcher being evaluated.
 // This is globally unique because only one watcher
 // can be evaluated at a time.
+// Dep.target 不是一成不变的，它通过 pushTarget 和 popTarget 两个方法不断的在变动，
+// 就像注释中所说，Dep.target 始终指向的是当前要被计算的 watcher 实例
 Dep.target = null
 const targetStack = []
 

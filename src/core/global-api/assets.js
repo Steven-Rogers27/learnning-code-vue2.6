@@ -6,6 +6,12 @@ import { isPlainObject, validateComponentName } from '../util/index'
 export function initAssetRegisters (Vue: GlobalAPI) {
   /**
    * Create asset registration methods.
+   * ASSET_TYPES:
+      'component',
+      'directive',
+      'filter'
+
+      给 Vue 实例上注册或者获取全局组件、过滤器、指令
    */
   ASSET_TYPES.forEach(type => {
     Vue[type] = function (
