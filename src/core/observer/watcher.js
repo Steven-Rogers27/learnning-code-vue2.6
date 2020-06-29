@@ -205,8 +205,10 @@ export default class Watcher {
     if (this.lazy) {
       this.dirty = true
     } else if (this.sync) {
+      // 只有当是同步 watcher 时才会直接执行 run()（执行watcher回调）
       this.run()
     } else {
+      // 绝大多数的 watcher 都会走这里，加入微任务队列中（通过 nextTick），在当前宏任务结束后全部执行掉
       queueWatcher(this)
     }
   }

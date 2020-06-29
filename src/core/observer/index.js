@@ -33,6 +33,8 @@ export function toggleObserving (value: boolean) {
  * object. Once attached, the observer converts the target
  * object's property keys into getter/setters that
  * collect dependencies and dispatch updates.
+ * 上面注释中所说的 —— 把目标对象的属性键 keys 转成 getters/setters ，用来收集依赖、通知更新 —— 这说的就是
+ * defineReactive() 执行时候给每个属性键 key 都关联了一个 dep 对象，收集依赖、通知更新，都是 dep 对象实现的。
  */
 export class Observer {
   value: any;
@@ -46,12 +48,19 @@ export class Observer {
     def(value, '__ob__', this)
     if (Array.isArray(value)) {
       if (hasProto) {
+        // 直接把 arrayMethods 设置成 value 数组的原型对象,
+        // 也就把 arrayMethods 中重新定义了的 7 种会修改原始数组值的方法添加到了 value 数组的原型链上
         protoAugment(value, arrayMethods)
       } else {
+        // 在不支持 __proto__ 属性的时候，直接把 arrayMethods 中重定义的 7 个方法定义到 value 数组本身上
         copyAugment(value, arrayMethods, arrayKeys)
       }
+      // 上面这个 if-else 都是对 value 数组自身方法的扩展或者重定义，
+      // 下面再递归式的对 value 数组的每个元素关联上 observer 对象，value 数组中的 string, number, boolean 这样的
+      // 基础类型值不会关联 observer，只给数组和对象元素关联。
       this.observeArray(value)
     } else {
+      // 此时 value 是个对象，把它自身的可枚举的属性 key，都重新定义为 getter/setter
       this.walk(value)
     }
   }
@@ -70,6 +79,8 @@ export class Observer {
 
   /**
    * Observe a list of Array items.
+   * 如果数组中的元素不是数组和对象，诸如 boolean, number, string, symbol, bigint, function 这样的
+   * 基础类型值，是不会为其关联 observer 实例的
    */
   observeArray (items: Array<any>) {
     for (let i = 0, l = items.length; i < l; i++) {
@@ -109,6 +120,8 @@ function copyAugment (target: Object, src: Object, keys: Array<string>) {
  */
 export function observe (value: any, asRootData: ?boolean): Observer | void {
   if (!isObject(value) || value instanceof VNode) {
+    // 除了 VNode 外，比如 boolean, number, string, symbol, function, bigint, undefined, null 这些类型的值
+    // 都是不能关联 observer 实例的
     return
   }
   let ob: Observer | void
@@ -210,11 +223,15 @@ export function set (target: Array<any> | Object, key: any, val: any): any {
     warn(`Cannot set reactive property on undefined, null, or primitive value: ${(target: any)}`)
   }
   if (Array.isArray(target) && isValidArrayIndex(key)) {
+    // 如果想要插入的位置 key > 数组本身的长度，会在数组中产生 empty 空洞
     target.length = Math.max(target.length, key)
+    // 因为在 Observer 的构造函数中，已经把数组的 splice 方法重新定义为会执行 dep.notify() 通知的，
+    // 所以这里插入一个值时，是会触发订阅者执行回调的。
     target.splice(key, 1, val)
     return val
   }
   if (key in target && !(key in Object.prototype)) {
+    // 修改对象自身已有的属性值，会通过 setter 触发这个对象所关联的 dep 把这个变化通知给订阅者
     target[key] = val
     return val
   }
@@ -227,11 +244,15 @@ export function set (target: Array<any> | Object, key: any, val: any): any {
     return val
   }
   if (!ob) {
+    // 此时 target 对象没有关联的 observer 实例,
+    // 举个例子，你也可以临时自定义一个对象，然后使用 Vue.set()/this.$set() 来给这个对象添加属性
     target[key] = val
     return val
   }
+  // 此时的 key 是新增加的一个属性，而且 target 对象有关联的 observer 实例，
+  // 此时则通过 defineReactive 在原始值（ob.value）上增加属性 key 的定义
   defineReactive(ob.value, key, val)
-  // target 的属性值有变化，则把这一变化通过 dep 通知给所有监听的 watchers，让这些 watchers 执行更新操作
+  // 因为有新增加的属性 key，所以需要手动执行 dep.notify() 把 target 的这一变化通知给所有订阅者 watchers，让这些订阅者 watchers 执行回调
   ob.dep.notify()
   return val
 }
@@ -246,6 +267,7 @@ export function del (target: Array<any> | Object, key: any) {
     warn(`Cannot delete reactive property on undefined, null, or primitive value: ${(target: any)}`)
   }
   if (Array.isArray(target) && isValidArrayIndex(key)) {
+    // 同理，splice() 方法会触发该数组所关联的 dep 执行 notify()，通知相应的订阅者
     target.splice(key, 1)
     return
   }
@@ -258,18 +280,22 @@ export function del (target: Array<any> | Object, key: any) {
     return
   }
   if (!hasOwn(target, key)) {
+    // 如果 key 不是 target 对象自身已有的属性，本次 del 操作什么也不做
     return
   }
   delete target[key]
   if (!ob) {
     return
   }
+  // 删除 target 对象上的属性，需要手动执行 notify() ，不过前提是 target 已经有关联 observer 实例
   ob.dep.notify()
 }
 
 /**
  * Collect dependencies on array elements when the array is touched, since
  * we cannot intercept array element access like property getters.
+ * 递归的把数组中每个元素的 dep 都添加到当前的 Dep.target 的订阅目标列表(deps)中，
+ * 同时也把 Dep.target 添加到这些 dep 的订阅者列表(subs)中，从而建立双向的发布/订阅模式
  */
 function dependArray (value: Array<any>) {
   for (let e, i = 0, l = value.length; i < l; i++) {
