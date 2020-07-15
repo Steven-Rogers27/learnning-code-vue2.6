@@ -156,7 +156,9 @@ export default class Watcher {
       // depIds 中保存的是上一周期中收集的依赖，如果 depIds 中还没有这个新的 dep，基于双向绑定的原理，则需要把当前 watcher 添加到这个新 dep 的 subs 数组中
       // 如果 depIds 中已经有这个 id，说明当前 watcher 在之前的周期中已经添加到这个 dep 的 subs 数组中了，这次无需再加
       if (!this.depIds.has(id)) {
-        dep.addSub(this) // addDep() 方法核心的一句！！把当前 watcher 添加到这个依赖的 subs 数组中
+        // addDep() 方法核心的一句！！把当前 watcher 添加到这个依赖的 subs 数组中，
+        // 之后当这个 dep 所关联的值有变化时，会通过 notify() 方法通知当前 watcher 执行 update
+        dep.addSub(this)
       }
     }
   }

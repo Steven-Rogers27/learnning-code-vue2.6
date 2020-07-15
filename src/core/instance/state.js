@@ -288,6 +288,9 @@ function createComputedGetter (key) {
         watcher.evaluate()
       }
       if (Dep.target) {
+        // 把 watcher 的订阅目标列表 deps（简称 watcherDeps） 中的所有 dep 都添加到当前 Dep.target 指向的 watcher（简称 TargetWatcher） 的订阅目标列表 deps 中，
+        // 同时也把 TargetWatcher 添加到所有 watcherDeps 的订阅者列表 subs 中。
+        // 也就是说 TargetWatcher 订阅了 watcherDeps 的变化，watcherDeps 一旦变化也会通知到 TargetWatcher
         watcher.depend()
       }
       return watcher.value
