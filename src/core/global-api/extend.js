@@ -19,7 +19,7 @@ export function initExtend (Vue: GlobalAPI) {
   Vue.extend = function (extendOptions: Object): Function {
     extendOptions = extendOptions || {}
     const Super = this
-    const SuperId = Super.cid
+    const SuperId = Super.cid // this 指向构造函数 Vue，SuperId 就是构造函数 Vue 的 cid，Vue.cid 等于 0
     const cachedCtors = extendOptions._Ctor || (extendOptions._Ctor = {})
     if (cachedCtors[SuperId]) {
       return cachedCtors[SuperId]
@@ -34,7 +34,7 @@ export function initExtend (Vue: GlobalAPI) {
       this._init(options)
     }
     Sub.prototype = Object.create(Super.prototype)
-    Sub.prototype.constructor = Sub
+    Sub.prototype.constructor = Sub // 让 Sub 构造函数和 Super 构造函数挂在同一个原型链上
     Sub.cid = cid++
     Sub.options = mergeOptions(
       Super.options,

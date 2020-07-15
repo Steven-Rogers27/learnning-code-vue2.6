@@ -54,18 +54,18 @@ function mergeData (to: Object, from: ?Object): Object {
     ? Reflect.ownKeys(from)
     : Object.keys(from)
 
-  for (let i = 0; i < keys.length; i++) {
+  for (let i = 0; i < keys.length; i++) { // 用 from 对象上的 key 做遍历
     key = keys[i]
     // in case the object is already observed...
     if (key === '__ob__') continue
     toVal = to[key]
     fromVal = from[key]
-    if (!hasOwn(to, key)) {
+    if (!hasOwn(to, key)) { // from 对象上有，而 to 对象上没有的 key
       set(to, key, fromVal)
     } else if (
       toVal !== fromVal &&
       isPlainObject(toVal) &&
-      isPlainObject(fromVal)
+      isPlainObject(fromVal)  // 只有 toVal 和 fromVal 都是对象时，才递归进行合并，如果 toVal 和 fromVal 其中之一不是对象，则这个属性值就被跳过不会做合并
     ) {
       mergeData(toVal, fromVal)
     }
@@ -75,6 +75,7 @@ function mergeData (to: Object, from: ?Object): Object {
 
 /**
  * Data
+ * provide, data 的默认合并策略
  */
 export function mergeDataOrFn (
   parentVal: any,
@@ -95,6 +96,7 @@ export function mergeDataOrFn (
     // check if parentVal is a function here because
     // it has to be a function to pass previous merges.
     return function mergedDataFn () {
+      // 把 parentVal 的属性值合并到 childVal 上，会对 childVal 做修改
       return mergeData(
         typeof childVal === 'function' ? childVal.call(this, this) : childVal,
         typeof parentVal === 'function' ? parentVal.call(this, this) : parentVal
@@ -110,6 +112,7 @@ export function mergeDataOrFn (
         ? parentVal.call(vm, vm)
         : parentVal
       if (instanceData) {
+        // 把 parentVal 的属性值合并到 childVal 上，会对 childVal 做修改
         return mergeData(instanceData, defaultData)
       } else {
         return defaultData
@@ -132,16 +135,31 @@ strats.data = function (
         vm
       )
 
-      return parentVal
+      return parentVal // childVal 如果不是函数形式，就不会做合并，只把 parentVal 原样返回
     }
+    // mergeDataOrFn 实际上是把 parentVal 上的属性值合并到 childVal 上了，修改了 childVal
     return mergeDataOrFn(parentVal, childVal)
   }
 
+  // mergeDataOrFn 实际上是把 parentVal 上的属性值合并到 childVal 上了，修改了 childVal
   return mergeDataOrFn(parentVal, childVal, vm)
 }
 
 /**
  * Hooks and props are merged as arrays.
+ * 钩子函数的默认合并策略
+  'beforeCreate',
+  'created',
+  'beforeMount',
+  'mounted',
+  'beforeUpdate',
+  'updated',
+  'beforeDestroy',
+  'destroyed',
+  'activated',
+  'deactivated',
+  'errorCaptured',
+  'serverPrefetch'
  */
 function mergeHook (
   parentVal: ?Array<Function>,
@@ -149,13 +167,13 @@ function mergeHook (
 ): ?Array<Function> {
   const res = childVal
     ? parentVal
-      ? parentVal.concat(childVal)
+      ? parentVal.concat(childVal) // 把子数组中的钩子添加到父数组的后面
       : Array.isArray(childVal)
         ? childVal
         : [childVal]
     : parentVal
   return res
-    ? dedupeHooks(res)
+    ? dedupeHooks(res) // 对合并后的钩子函数做去重
     : res
 }
 
@@ -179,6 +197,8 @@ LIFECYCLE_HOOKS.forEach(hook => {
  * When a vm is present (instance creation), we need to do
  * a three-way merge between constructor options, instance
  * options and parent options.
+ * components, directives, filters 的默认 mergeOption 方法，
+ * 采用 extend() 方法合并，则遇到同名属性，子 components 中的会覆盖调父 components 的，directives, filters 一样
  */
 function mergeAssets (
   parentVal: ?Object,
@@ -189,7 +209,7 @@ function mergeAssets (
   const res = Object.create(parentVal || null)
   if (childVal) {
     process.env.NODE_ENV !== 'production' && assertObjectType(key, childVal, vm)
-    return extend(res, childVal)
+    return extend(res, childVal) // 合并的时候用的是从父对象 parentVal 生成的新对象 res，所以合并操作不会修改原始的 parentVal
   } else {
     return res
   }
@@ -204,6 +224,7 @@ ASSET_TYPES.forEach(function (type) {
  *
  * Watchers hashes should not overwrite one
  * another, so we merge them as arrays.
+ * watch 的默认合并策略
  */
 strats.watch = function (
   parentVal: ?Object,
@@ -221,7 +242,7 @@ strats.watch = function (
   }
   if (!parentVal) return childVal
   const ret = {}
-  extend(ret, parentVal)
+  extend(ret, parentVal) // 把 parentVal 的属性值浅拷贝出来，以便不影响原始 parentVal
   for (const key in childVal) {
     let parent = ret[key]
     const child = childVal[key]
@@ -229,7 +250,7 @@ strats.watch = function (
       parent = [parent]
     }
     ret[key] = parent
-      ? parent.concat(child)
+      ? parent.concat(child) // parent 和 child 中的同名属性值按数组方式合并，child 的拼接在 parent 的后面
       : Array.isArray(child) ? child : [child]
   }
   return ret
@@ -237,6 +258,7 @@ strats.watch = function (
 
 /**
  * Other object hashes.
+ * props, methods, inject, computed 的默认合并策略
  */
 strats.props =
 strats.methods =
@@ -252,8 +274,8 @@ strats.computed = function (
   }
   if (!parentVal) return childVal
   const ret = Object.create(null)
-  extend(ret, parentVal)
-  if (childVal) extend(ret, childVal)
+  extend(ret, parentVal) // 把父对象的属性浅拷贝到新的 ret 对象上
+  if (childVal) extend(ret, childVal) // 子对象也往新的 ret 对象上拷贝属性，不会影响原本的 parentVal
   return ret
 }
 strats.provide = mergeDataOrFn
@@ -435,11 +457,11 @@ export function mergeOptions (
 
   const options = {}
   let key
-  for (key in parent) {
+  for (key in parent) { // 遍历parent对象自身的可枚举属性，如果child对象上刚好也有这些属性，就把它们合并到 parent 上
     mergeField(key)
   }
   for (key in child) {
-    if (!hasOwn(parent, key)) {
+    if (!hasOwn(parent, key)) { //只把 child 对象有，而 parent 对象上没有的属性合并到 parent 上
       mergeField(key)
     }
   }

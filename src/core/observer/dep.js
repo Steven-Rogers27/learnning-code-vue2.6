@@ -28,9 +28,9 @@ export default class Dep {
     remove(this.subs, sub)
   }
 
-  // 把当前这个 dep (this所指) 添加到 Dep.target （指向当前正在被计算的 watcher） 的依赖列表（deps）中，
+  // 把当前这个 dep (this所指) 添加到 Dep.target （指向当前正在被计算的 watcher） 的订阅目标列表（deps）中，
   // 同时也把 Dep.target 添加到这个 dep 的订阅者（subs）数组中
-  // 也就是说，watcher 的依赖列表中有 dep，反过来 dep 的 subs 列表中也有这个 watcher
+  // 也就是说，watcher 的订阅目标列表中有 dep，反过来 dep 的 subs 列表中也有这个 watcher
   depend () {
     if (Dep.target) {
       Dep.target.addDep(this)

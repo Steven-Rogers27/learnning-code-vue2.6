@@ -315,6 +315,7 @@ export function activateChildComponent (vm: Component, direct?: boolean) {
   if (direct) {
     vm._directInactive = false
     if (isInInactiveTree(vm)) {
+      // 如果 vm 的祖先组件中有任何一个的状态是未激活状态（vm._inactive === true），则该 vm 也无法激活
       return
     }
   } else if (vm._directInactive) {
@@ -323,8 +324,10 @@ export function activateChildComponent (vm: Component, direct?: boolean) {
   if (vm._inactive || vm._inactive === null) {
     vm._inactive = false
     for (let i = 0; i < vm.$children.length; i++) {
+      // 递归的把所有子组件也都激活
       activateChildComponent(vm.$children[i])
     }
+    // 因为递归激活子组件在调用 activated 钩子函数之前，所以子组件的 activated 钩子在父组件的 activated 钩子之前执行
     callHook(vm, 'activated')
   }
 }
