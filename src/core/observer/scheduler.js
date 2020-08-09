@@ -95,6 +95,7 @@ function flushSchedulerQueue () {
   // do not cache length because more watchers might be pushed
   // as we run existing watchers
   // 在 flushSchedulerQueue 执行期间，还会有新的 watcher 通过 queueWatcher 插入队列（只要有订阅者 watcher 收到订阅对象 dep 的变化通知，这个 watcher 就会插入队列）
+  // 逐个执行 queue队列中的watcher的run()方法，也就是执行watcher的cb回调函数。
   for (index = 0; index < queue.length; index++) {
     watcher = queue[index]
     // 比如在定义组件的渲染 watcher 时，定义了 watcher.before（其中是执行 beforeUpdate 钩子函数）
@@ -111,6 +112,7 @@ function flushSchedulerQueue () {
     // 过程中又修改了该 watcher 自己的订阅对象 dep 所关联的值，进而 dep 又通知该 watcher，watcher 又被加入队列。这就造成了死循环更新。
     if (process.env.NODE_ENV !== 'production' && has[id] != null) {
       circular[id] = (circular[id] || 0) + 1
+      // 统计每一个watcher的执行次数，超过100次会发出警告。
       if (circular[id] > MAX_UPDATE_COUNT) {
         warn(
           'You may have an infinite update loop ' + (
@@ -159,10 +161,12 @@ function callUpdatedHooks (queue) {
 /**
  * Queue a kept-alive component that was activated during patch.
  * The queue will be processed after the entire tree has been patched.
+ * 组件vm处于激活状态，把它加入activedChildren队列中。
  */
 export function queueActivatedComponent (vm: Component) {
   // setting _inactive to false here so that a render function can
   // rely on checking whether it's in an inactive tree (e.g. router-view)
+  // _inactive属性为false时，渲染函数就知道该组件不在inactive树上。
   vm._inactive = false
   activatedChildren.push(vm)
 }
@@ -196,6 +200,7 @@ export function queueWatcher (watcher: Watcher) {
       while (i > index && queue[i].id > watcher.id) {
         i--
       }
+ // 按watcher.id由小到大的顺序把watcher插在合适的位置。
       queue.splice(i + 1, 0, watcher) // 把 watcher 按 id 由小到大的顺序插入 queue
     }
     // queue the flush
@@ -209,6 +214,7 @@ export function queueWatcher (watcher: Watcher) {
         return
       }
       // 在绝大多数情况下，都是把清理 watcher 队列的动作放进微任务队列，
+      // 除非是同步更新，否则将在下一个事件循环中清空queue队列中的watcher。
       nextTick(flushSchedulerQueue)
     }
   }
