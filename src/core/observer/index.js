@@ -38,6 +38,9 @@ export function toggleObserving (value: boolean) {
  */
 export class Observer {
   value: any;
+  // 每个observer对象只关联一个dep对象，而一个dep对象内部可以保存一组watcher（dep.subs属性）
+  // 可以理解为，Dep对象相当于observer和watcher之间的桥梁，observer通过dep来管理一组watcher，
+  // 以便于每当通过setter修改、或者通过set新增属性值时，observer可以通过dep来把这一变化通知给相关watcher执行更新。
   dep: Dep;
   vmCount: number; // number of vms that have this object as root $data
 
@@ -167,19 +170,29 @@ export function defineReactive (
   if ((!getter || setter) && arguments.length === 2) {
     val = obj[key]
   }
-
+  // 注意：下面定义的get/set函数中用到的 dep, childOb, val 都利用了闭包。
+  // 这三个值不是一成不变的，而是随着get/set的执行不断变化的。
   let childOb = !shallow && observe(val)
   Object.defineProperty(obj, key, {
     enumerable: true,
     configurable: true,
     get: function reactiveGetter () {
+      // 把val值所关联的observer对象上的dep对象添加到Dep.target中，
+      // 如果val是数组，则以同样方式也递归的处理其子元素。
       const value = getter ? getter.call(obj) : val
       if (Dep.target) {
         // get 方法除了获取值以外，也是一个收集依赖的过程，
         // 给每个 key 执行 defineReactive 时，都给它关联一个独有的 dep 实例，
         // 然后把这个 dep 添加到 Dep.target 的依赖列表（deps）中，同时把 Dep.target 也添加到 dep 的订阅者（subs）列表中
+        
+             // 把新创建的dep添加到Dep.target所指向的全局唯一的watcher中。
+        // 这里利用的闭包，每次执行defineReactive()都会为新定义的这个get函数
+        // 生成一个dep对象，这个dep对象自此就一直伴随着这对get/set函数的执行。
         dep.depend()
         if (childOb) {
+        // 把childOb的dep也加到Dep.target这个watcher中。
+        // 第一次执行defineReactive()时候，childOB可能是初始值val，也可能还不存在，
+        // 但是当执行过下面的set()方法后，childOb 就成了新设置的这个newVal的observe了。
           childOb.dep.depend()
           if (Array.isArray(value)) {
             dependArray(value)
@@ -191,6 +204,7 @@ export function defineReactive (
     set: function reactiveSetter (newVal) {
       const value = getter ? getter.call(obj) : val
       /* eslint-disable no-self-compare */
+      // newVal 和 value相等，或者value 和 newVal 是NaN，则不处理。
       if (newVal === value || (newVal !== newVal && value !== value)) {
         return
       }
@@ -253,6 +267,9 @@ export function set (target: Array<any> | Object, key: any, val: any): any {
   // 此时则通过 defineReactive 在原始值（ob.value）上增加属性 key 的定义
   defineReactive(ob.value, key, val)
   // 因为有新增加的属性 key，所以需要手动执行 dep.notify() 把 target 的这一变化通知给所有订阅者 watchers，让这些订阅者 watchers 执行回调
+
+ // 给target新加，或者删除（见下面的del函数）一个属性后，target则通过其ob对象上的dep对象，
+  // 把所有watcher都更新一遍（见notify方法）。
   ob.dep.notify()
   return val
 }
@@ -288,6 +305,8 @@ export function del (target: Array<any> | Object, key: any) {
     return
   }
   // 删除 target 对象上的属性，需要手动执行 notify() ，不过前提是 target 已经有关联 observer 实例
+   // 给target新加（见上面set函数），或者删除一个属性后，target则通过其ob对象上的dep对象，
+  // 把所有watcher都更新一遍（见notify方法）。
   ob.dep.notify()
 }
 
@@ -296,6 +315,7 @@ export function del (target: Array<any> | Object, key: any) {
  * we cannot intercept array element access like property getters.
  * 递归的把数组中每个元素的 dep 都添加到当前的 Dep.target 的订阅目标列表(deps)中，
  * 同时也把 Dep.target 添加到这些 dep 的订阅者列表(subs)中，从而建立双向的发布/订阅模式
+ * 递归的把数组中的每个元素所关联的observer对象的dep，添加到全局唯一的Dep.target中。
  */
 function dependArray (value: Array<any>) {
   for (let e, i = 0, l = value.length; i < l; i++) {

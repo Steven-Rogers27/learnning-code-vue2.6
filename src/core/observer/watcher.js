@@ -35,6 +35,9 @@ let uid = 0
 export default class Watcher {
   vm: Component;
   expression: string;
+  // 一个watcher只对应一个cb回调，但同时关联了一组Dep对象（deps和newDeps）
+  // 从组件实例中的watcher属性来理解，一个watcher就是只对应一个回调函数，但在这个回调函数内部，
+  // 却可能存在多个影响这个watcher发生变化的变量。
   cb: Function;
   id: number;
   deep: boolean;
@@ -74,6 +77,7 @@ export default class Watcher {
     } else {
       this.deep = this.user = this.lazy = this.sync = false
     }
+    // 一个watcher只有一个cb回调函数
     this.cb = cb
     this.id = ++uid // uid for batching
     this.active = true
@@ -114,6 +118,7 @@ export default class Watcher {
    */
   get () {
     // 把 Dep.target 置为当前 watcher
+    // 开始执行前把当前watcher设置成全局唯一的Dep.target所指向的watcher
     pushTarget(this)
     let value
     const vm = this.vm
@@ -133,6 +138,7 @@ export default class Watcher {
       if (this.deep) {
         traverse(value)
       }
+      // 结束时又把Dep.target所指向的watcher还原回去。
       popTarget()
       this.cleanupDeps()
     }
@@ -173,12 +179,17 @@ export default class Watcher {
    */
   cleanupDeps () {
     let i = this.deps.length
+    // 找出deps中那些已经在newDepIds中不存在的dep，
+    // 把当前watcher也从这些dep的subs数组中移除
     while (i--) {
       // 找出 deps 中那些不在 newDepIds 中的 dep，把当前 watcher 从这些 dep 的 subs 中移除
       // deps 中保存的是上一个 get() 周期中收集的依赖，newDepIds/newDeps 中是当前这一轮中收集的依赖，
       // 所以，这里的意思就是找出那些在本轮 get() 周期中已经不存在的 dep，然后把当前 watcher 从这些 dep 的 subs 数组中移除
       const dep = this.deps[i]
+      // 如果这个dep不在watcher的newDepIds中，
+      // 则也把当前watcher从这个dep的subs数组中移除
       if (!this.newDepIds.has(dep.id)) {
+      // newDepIds 中没有这个 dep 的 id 时，就把当前 watcher 从这个 dep 的 subs 数组中移除。
         // 把当前 watcher 从已经不在本轮依赖列表中的 dep 的 subs 数组中移除
         dep.removeSub(this)
       }
@@ -189,12 +200,13 @@ export default class Watcher {
     this.depIds = this.newDepIds
     this.newDepIds = tmp
     this.newDepIds.clear()
+    // 把 newDepIds 交换到 depIds 上，然后清空掉原先的 depIds
     // 把 newDeps 的内容换到 deps 上，然后清空 newDeps
     // 把本轮新收集的依赖列表同步到 deps 上
     tmp = this.deps
     this.deps = this.newDeps
     this.newDeps = tmp
-    this.newDeps.length = 0
+    this.newDeps.length = 0 // 把 newDeps 交换到 deps 上，然后清空掉原先的 deps
   }
 
   /**
@@ -211,6 +223,8 @@ export default class Watcher {
       this.run()
     } else {
       // 绝大多数的 watcher 都会走这里，加入微任务队列中（通过 nextTick），在当前宏任务结束后全部执行掉
+        // 把当前watcher加到scheduler的queue队列中，然后
+      // 在下一个事件循环周期中全部执行掉queue中的watcher的cb回调。
       queueWatcher(this)
     }
   }
@@ -224,6 +238,7 @@ export default class Watcher {
     if (this.active) {
       const value = this.get()
       if (
+        // 通过get()拿到的是新值，this.value上的是旧值。
         value !== this.value ||
         // Deep watchers and watchers on Object/Arrays should fire even
         // when the value is the same, because the value may
@@ -252,6 +267,7 @@ export default class Watcher {
    * This only gets called for lazy watchers.
    */
   evaluate () {
+    // 从get()获取新值来更新this.value上的旧值。
     this.value = this.get()
     this.dirty = false
   }
@@ -273,6 +289,8 @@ export default class Watcher {
   // 由此可见，watcher.deps 和 dep.subs 形成了一个循环的嵌套
   depend () {
     let i = this.deps.length
+    // 把deps中的所有dep实例，添加到全局唯一的Dep.target这个watcher的
+    // newDepsId和newDeps中，参见addDep()方法
     while (i--) {
       this.deps[i].depend()
     }
@@ -291,6 +309,7 @@ export default class Watcher {
         remove(this.vm._watchers, this)
       }
       let i = this.deps.length
+      // 把当前watcher从所有deps的subs数组中移除。
       while (i--) {
         // 把这个 watcher 从它的所有依赖对象的订阅者列表（subs）中删除，删除后，当这个dep所关联的值再有变化时，dep.notify() 就不会再通知到该 watcher
         this.deps[i].removeSub(this)

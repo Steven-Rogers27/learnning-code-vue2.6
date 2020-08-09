@@ -41,12 +41,15 @@ export default class Dep {
   notify () {
     // stabilize the subscriber list first
     const subs = this.subs.slice()
+    // 如果config.async为false，表示Vue采用同步更新的方式，此时
+    // 需要先把subs中的watcher按id由小到大排序。
     if (process.env.NODE_ENV !== 'production' && !config.async) {
       // subs aren't sorted in scheduler if not running async
       // we need to sort them now to make sure they fire in correct
       // order
       subs.sort((a, b) => a.id - b.id)
     }
+    // 逐个执行subs中每个watcher的update()方法。
     for (let i = 0, l = subs.length; i < l; i++) {
       subs[i].update()
     }
