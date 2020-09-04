@@ -153,7 +153,7 @@ export function mountComponent (
   // 把 dom 对象挂在 vm.$el 上
   vm.$el = el
   if (!vm.$options.render) {
-    // 创建一个 VNode 实例挂在 vm.$options.render 上
+    // createEmptyVNode 是一个函数，它会返回一个 VNode 实例
     vm.$options.render = createEmptyVNode
     if (process.env.NODE_ENV !== 'production') {
       /* istanbul ignore if */
@@ -305,6 +305,7 @@ export function updateChildComponent (
 }
 
 function isInInactiveTree (vm) {
+  // 如果vm的某个父组件是未激活状态的，则vm就处于一颗未激活的树上。
   while (vm && (vm = vm.$parent)) {
     if (vm._inactive) return true
   }
@@ -314,6 +315,7 @@ function isInInactiveTree (vm) {
 export function activateChildComponent (vm: Component, direct?: boolean) {
   if (direct) {
     vm._directInactive = false
+    // 如果vm的某个父组件处于未激活状态，则vm也无法被激活。
     if (isInInactiveTree(vm)) {
       // 如果 vm 的祖先组件中有任何一个的状态是未激活状态（vm._inactive === true），则该 vm 也无法激活
       return

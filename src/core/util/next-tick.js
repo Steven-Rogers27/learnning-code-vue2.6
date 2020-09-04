@@ -13,6 +13,7 @@ let pending = false
 function flushCallbacks () {
   pending = false
   const copies = callbacks.slice(0)
+  // 把callbacks队列清空，然后依次执行注册的每个回调函数。
   callbacks.length = 0
   for (let i = 0; i < copies.length; i++) {
     copies[i]()
@@ -39,6 +40,11 @@ let timerFunc
 // completely stops working after triggering a few times... so, if native
 // Promise is available, we will use it:
 /* istanbul ignore next, $flow-disable-line */
+// 选择异步的方式：
+// 1. Promise (微任务)
+// 2. MutationObserver （微任务）
+// 3. setImmediate （宏任务）
+// 4. setTimeout （宏任务）
 if (typeof Promise !== 'undefined' && isNative(Promise)) {
   const p = Promise.resolve()
   timerFunc = () => {

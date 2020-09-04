@@ -12,7 +12,9 @@ const seenObjects = new Set()
  * is collected as a "deep" dependency.
  */
 export function traverse (val: any) {
+  // 递归的把val数组/对象自身的，及其内部每个元素/属性所关联的observer对象中的dep的id添加到seenObjects中。
   _traverse(val, seenObjects)
+// 这里不明白的是，刚刚递归把所有的dep.id全部加入seenObjects中，立马又给清掉了，这是为啥？？
   seenObjects.clear() // 不能理解！！为什么刚收集到 seenObjects 中，又要把 seenObjects 清空
 }
 
