@@ -187,6 +187,7 @@ Funds donated via Patreon go directly to support Evan You's full-time work on Vu
       <td align="center" valign="middle">
         <a href="https://www.foo.software" target="_blank">
           <img width="148px" src="https://raw.githubusercontent.com/vuejs/vuejs.org/master/themes/vue/source/images/foo.png">
+<<<<<<< HEAD
         </a>
       </td>
       <td align="center" valign="middle">
@@ -202,6 +203,7 @@ Funds donated via Patreon go directly to support Evan You's full-time work on Vu
       <td align="center" valign="middle">
         <a href="https://vpn-review.com/netflix-vpn" target="_blank">
           <img width="148px" src="https://raw.githubusercontent.com/vuejs/vuejs.org/master/themes/vue/source/images/vpn_review.png">
+<<<<<<< HEAD
         </a>
       </td>
       <td align="center" valign="middle">
@@ -212,6 +214,15 @@ Funds donated via Patreon go directly to support Evan You's full-time work on Vu
       <td align="center" valign="middle">
         <a href="https://www.okayhq.com/" target="_blank">
           <img width="148px" src="https://raw.githubusercontent.com/vuejs/vuejs.org/master/themes/vue/source/images/okay.png">
+=======
+=======
+        </a>
+      </td>
+      <td align="center" valign="middle">
+        <a href="https://flatlogic.com/templates" target="_blank">
+          <img width="148px" src="https://raw.githubusercontent.com/vuejs/vuejs.org/master/themes/vue/source/images/flatlogic_templates.svg?sanitize=true">
+>>>>>>> 35050a5528ef462e62299157e7f1ed5a6159fc44
+>>>>>>> 46855bdb149d9d4336cc5fe4fe147b128f8135cc
         </a>
       </td>
     </tr><tr></tr>
