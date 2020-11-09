@@ -56,6 +56,7 @@ export function parseHTML (html, options) {
   const expectHTML = options.expectHTML
   const isUnaryTag = options.isUnaryTag || no
   const canBeLeftOpenTag = options.canBeLeftOpenTag || no
+  // 指示即将该处理的 html 的字符下标
   let index = 0
   let last, lastTag
   while (html) {
@@ -70,6 +71,7 @@ export function parseHTML (html, options) {
 
           if (commentEnd >= 0) {
             if (options.shouldKeepComment) {
+              // 把注释内容做成 ASTTEXT 类型的节点加进最终的 ASTElement 树
               options.comment(html.substring(4, commentEnd), index, index + commentEnd + 3)
             }
             advance(commentEnd + 3)

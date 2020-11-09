@@ -17,14 +17,20 @@ export function parseFilters (exp: string): string {
     prev = c
     c = exp.charCodeAt(i)
     if (inSingle) {
+      // String.fromCharCode(0x27) == '
+      // String.fromCharCode(0x5C) == \
       if (c === 0x27 && prev !== 0x5C) inSingle = false
     } else if (inDouble) {
+      // String.fromCharCode(0x22) == "
       if (c === 0x22 && prev !== 0x5C) inDouble = false
     } else if (inTemplateString) {
+      // String.fromCharCode(0x60) == `
       if (c === 0x60 && prev !== 0x5C) inTemplateString = false
     } else if (inRegex) {
+      // String.fromCharCode(0x2f) == /
       if (c === 0x2f && prev !== 0x5C) inRegex = false
     } else if (
+      // String.fromCharCode(0x7C) == |
       c === 0x7C && // pipe
       exp.charCodeAt(i + 1) !== 0x7C &&
       exp.charCodeAt(i - 1) !== 0x7C &&

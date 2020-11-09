@@ -10,7 +10,7 @@ export function baseWarn (msg: string, range?: Range) {
   console.error(`[Vue compiler]: ${msg}`)
 }
 /* eslint-enable no-unused-vars */
-
+// 把 modules 中每个 module 的非空module[key]值过滤出来
 export function pluckModuleFunction<F: Function> (
   modules: ?Array<Object>,
   key: string

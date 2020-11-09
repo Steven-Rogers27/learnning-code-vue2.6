@@ -509,6 +509,7 @@ type ForParseResult = {
 };
 
 export function parseFor (exp: string): ?ForParseResult {
+  // forAliasRE = /([\s\S]*?)\s+(?:in|of)\s+([\s\S]*)/
   const inMatch = exp.match(forAliasRE)
   if (!inMatch) return
   const res = {}
