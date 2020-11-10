@@ -57,6 +57,7 @@ export function createCompileToFunctionFn (compile: Function): Function {
     }
 
     // compile
+    // ./create-compiler.js中 createCompilerCreator函数中的 compile
     const compiled = compile(template, options)
 
     // check compilation errors/tips

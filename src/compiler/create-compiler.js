@@ -17,7 +17,7 @@ export function createCompilerCreator (baseCompile: Function): Function {
       let warn = (msg, range, tip) => {
         (tip ? tips : errors).push(msg)
       }
-
+      // 如果有 options，把它和baseOptions合并
       if (options) {
         if (process.env.NODE_ENV !== 'production' && options.outputSourceRange) {
           // $flow-disable-line
@@ -57,7 +57,7 @@ export function createCompilerCreator (baseCompile: Function): Function {
       }
 
       finalOptions.warn = warn
-
+      // ./index.js 中参数baseCompile函数
       const compiled = baseCompile(template.trim(), finalOptions)
       if (process.env.NODE_ENV !== 'production') {
         detectErrors(compiled.ast, warn)
