@@ -42,7 +42,20 @@ export function initInjections (vm: Component) {
     toggleObserving(true)
   }
 }
-
+/**
+ * 
+ * @typedef InjectType {
+ *    [string]: {
+ *      from: string | symbol;
+ *      default: function | any;
+ *    }
+ * }
+ * @param {InjectType} inject 
+ * @param {*} vm 
+ * 遍历 inject 对象，用每个 key 对应的对象中的 from 字段去 vm 的父组件的 _provided 属性中找 from 所对应的值
+ * 找不到的话，如果有 default 就用之
+ * @returns {{ [string]: any }} 返回以 inject 中的 key 为键，以找到的值为 value 的对象
+ */
 export function resolveInject (inject: any, vm: Component): ?Object {
   if (inject) {
     // inject is :any because flow is not smart enough to figure out cached
